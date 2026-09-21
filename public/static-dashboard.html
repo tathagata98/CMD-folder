@@ -58,9 +58,9 @@
 
     button.addEventListener('click', () => {
       const selected = test.value;
-      output.textContent = `Opening GitHub Actions for: ${selected}`;
+      output.textContent = `Redirecting to GitHub Actions for: ${selected}`;
       status.textContent = 'Launching';
-      window.open(`${workflowUrl}?query=${encodeURIComponent('branch:main')}`, '_blank', 'noopener,noreferrer');
+      window.location.href = `${workflowUrl}?query=${encodeURIComponent('branch:main')}`;
     });
 
     refreshStatus();
