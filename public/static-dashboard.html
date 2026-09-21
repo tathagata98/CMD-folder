@@ -15,6 +15,7 @@
     select, button { border: 1px solid #374151; border-radius: 6px; padding: 10px 12px; background: #1f2937; color: inherit; font: inherit; }
     button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
     button:disabled { opacity: .5; cursor: wait; }
+    .link-note { margin-top: 12px; color: #cbd5e1; font-size: 14px; }
     .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
     section { min-width: 0; }
     h2 { font-size: 16px; }
@@ -34,8 +35,9 @@
         <option value="tests/incognito-chrome.spec.ts">Incognito Chrome</option>
         <option value="tests/real-chrome-incognito.spec.ts">Real Chrome Incognito</option>
       </select>
-      <button id="run">Run test</button>
+      <button id="run">Run on GitHub Actions</button>
     </div>
+    <div class="link-note">This launches the GitHub Actions workflow so Playwright runs on GitHub-hosted runners.</div>
     <div class="grid">
       <section><h2>Live browser</h2><iframe title="Live Playwright browser" src="http://localhost:6080/vnc.html?autoconnect=1&resize=scale"></iframe></section>
       <section><h2>Runner output</h2><pre id="output">No test has been started.</pre></section>
@@ -47,35 +49,21 @@
     const status = document.querySelector('#status');
     const output = document.querySelector('#output');
 
-    async function refresh() {
-      try {
-        const response = await fetch('/api/status');
-        const run = await response.json();
-        status.textContent = run.status || 'Idle';
-        if (run.output !== undefined) output.textContent = run.output || 'Waiting for runner output...';
-        button.disabled = run.status === 'running';
-        if (run.status === 'running') setTimeout(refresh, 1000);
-      } catch (error) {
-        status.textContent = 'Offline';
-        output.textContent = 'Could not reach the dashboard API. Start the server or verify the backend is running.';
-      }
+    const workflowUrl = 'https://github.com/tathagata98/CMD-folder/actions/workflows/playwright-ci.yml';
+
+    function refreshStatus() {
+      status.textContent = 'Ready';
+      output.textContent = 'Click “Run on GitHub Actions” to start the workflow in GitHub.';
     }
 
-    button.addEventListener('click', async () => {
-      try {
-        const response = await fetch('/api/run', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ testFile: test.value }),
-        });
-        const result = await response.json();
-        if (!response.ok) output.textContent = result.error || 'Unable to start test';
-        await refresh();
-      } catch (error) {
-        output.textContent = 'Unable to start the test. The backend may be offline.';
-      }
+    button.addEventListener('click', () => {
+      const selected = test.value;
+      output.textContent = `Opening GitHub Actions for: ${selected}`;
+      status.textContent = 'Launching';
+      window.open(`${workflowUrl}?query=${encodeURIComponent('branch:main')}`, '_blank', 'noopener,noreferrer');
     });
 
-    refresh();
+    refreshStatus();
   </script>
 </body>
 </html>
