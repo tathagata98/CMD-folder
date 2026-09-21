@@ -24,9 +24,11 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
+        env:
+          CI: true
         run: npm test
 
       - name: Upload test results
