@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playwright Browser Runner</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #111827; color: #f3f4f6; }
+    body { margin: 0; padding: 24px; }
+    main { max-width: 1200px; margin: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    p { color: #9ca3af; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0; }
+    select, button { border: 1px solid #374151; border-radius: 6px; padding: 10px 12px; background: #1f2937; color: inherit; font: inherit; }
+    button { background: #2563eb; border-color: #2563eb; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+    section { min-width: 0; }
+    h2 { font-size: 16px; }
+    iframe { width: 100%; aspect-ratio: 16 / 10; border: 1px solid #374151; background: #000; }
+    pre { min-height: 220px; max-height: 420px; overflow: auto; padding: 16px; background: #030712; border: 1px solid #374151; white-space: pre-wrap; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div><h1>Playwright Browser Runner</h1><p>Select a test and watch its browser session below.</p></div>
+      <strong id="status">Idle</strong>
+    </header>
+    <div class="controls">
+      <select id="test">
+        <option value="tests/incognito-chrome.spec.ts">Incognito Chrome</option>
+        <option value="tests/real-chrome-incognito.spec.ts">Real Chrome Incognito</option>
+      </select>
+      <button id="run">Run test</button>
+    </div>
+    <div class="grid">
+      <section><h2>Live browser</h2><iframe title="Live Playwright browser" src="http://localhost:6080/vnc.html?autoconnect=1&resize=scale"></iframe></section>
+      <section><h2>Runner output</h2><pre id="output">No test has been started.</pre></section>
+    </div>
+  </main>
+  <script>
+    const button = document.querySelector('#run');
+    const test = document.querySelector('#test');
+    const status = document.querySelector('#status');
+    const output = document.querySelector('#output');
+
+    async function refresh() {
+      try {
+        const response = await fetch('/api/status');
+        const run = await response.json();
+        status.textContent = run.status || 'Idle';
+        if (run.output !== undefined) output.textContent = run.output || 'Waiting for runner output...';
+        button.disabled = run.status === 'running';
+        if (run.status === 'running') setTimeout(refresh, 1000);
+      } catch (error) {
+        status.textContent = 'Offline';
+        output.textContent = 'Could not reach the dashboard API. Start the server or verify the backend is running.';
+      }
+    }
+
+    button.addEventListener('click', async () => {
+      try {
+        const response = await fetch('/api/run', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ testFile: test.value }),
+        });
+        const result = await response.json();
+        if (!response.ok) output.textContent = result.error || 'Unable to start test';
+        await refresh();
+      } catch (error) {
+        output.textContent = 'Unable to start the test. The backend may be offline.';
+      }
+    });
+
+    refresh();
+  </script>
+</body>
+</html>
