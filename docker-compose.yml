@@ -1,7 +1,0 @@
-services:
-  playwright-dashboard:
-    build: .
-    ports:
-      - "3000:3000"
-      - "6080:6080"
-    shm_size: "2gb"

@@ -1,25 +1,46 @@
 {
   "name": "playwright-learning-typescript",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "",
-  "main": "index.js",
+  "main": "electron/main.js",
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "start": "node server.js"
+    "desktop": "electron .",
+    "package:win": "electron-builder --win"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
-  },
-  "directories": {
-    "test": "tests"
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
   },
   "dependencies": {
+    "@playwright/test": "^1.63.0",
     "playwright": "^1.63.0",
     "playwright-core": "^1.63.0"
+  },
+  "build": {
+    "appId": "com.playwright.learning.runner",
+    "productName": "Playwright Desktop Runner",
+    "asar": true,
+    "asarUnpack": [
+      "tests/**/*",
+      "node_modules/@playwright/**/*",
+      "node_modules/playwright/**/*",
+      "node_modules/playwright-core/**/*"
+    ],
+    "files": [
+      "electron/**/*",
+      "public/**/*",
+      "tests/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "target": "portable"
+    }
   }
 }

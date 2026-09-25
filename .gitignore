@@ -3,3 +3,5 @@ playwright-report/
 test-results/
 .DS_Store
 npm-debug.log*
+dist/
+electron-builder.yml

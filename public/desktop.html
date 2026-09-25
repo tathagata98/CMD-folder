@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Playwright Desktop Runner</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+    :root { font-family: 'DM Sans', sans-serif; color: #e7edf2; background: #101419; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 12% 0%, #263541 0, transparent 35%), #101419; }
+    main { width: min(1040px, 100%); margin: 0 auto; padding: 48px 32px; }
+    header { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin-bottom: 36px; }
+    .eyebrow { margin: 0 0 10px; color: #88b8a5; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    h1, h2 { font-family: 'Space Grotesk', sans-serif; }
+    h1 { margin: 0; max-width: 560px; font-size: clamp(34px, 5vw, 58px); line-height: .98; letter-spacing: -.04em; }
+    .intro { max-width: 520px; margin: 16px 0 0; color: #9eabb4; font-size: 16px; line-height: 1.55; }
+    .status { display: flex; align-items: center; gap: 9px; color: #c2ccd2; font-size: 13px; text-transform: capitalize; }
+    .status::before { width: 9px; height: 9px; border-radius: 50%; background: #88b8a5; content: ''; }
+    .status.running::before { background: #f2b86b; box-shadow: 0 0 0 5px #f2b86b22; }
+    .panel { border: 1px solid #2c3942; background: #171e24e8; box-shadow: 0 24px 70px #0000002b; }
+    .controls { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: end; padding: 24px; }
+    label { display: grid; gap: 9px; color: #9eabb4; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+    select { width: 100%; border: 1px solid #3b4a55; border-radius: 3px; padding: 13px 14px; color: #edf4f5; background: #202a31; font: inherit; font-size: 15px; }
+    button { border: 0; border-radius: 3px; padding: 13px 20px; color: #102019; background: #a6d3ba; font: inherit; font-weight: 700; cursor: pointer; }
+    button.stop { color: #f4d9d0; background: #713f3d; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    .output-wrap { margin-top: 20px; }
+    .output-head { display: flex; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid #2c3942; }
+    h2 { margin: 0; font-size: 17px; }
+    .hint { color: #73818a; font-size: 12px; }
+    pre { min-height: 300px; max-height: 440px; margin: 0; padding: 22px; overflow: auto; color: #cbd8d6; background: #0d1115; font: 13px/1.6 Consolas, monospace; white-space: pre-wrap; }
+    @media (max-width: 680px) { main { padding: 30px 18px; } header { display: block; } .status { margin-top: 22px; } .controls { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Local automation studio</p>
+        <h1>Run Chrome tests from your desktop.</h1>
+        <p class="intro">Choose a Playwright scenario, launch visible Chrome in incognito mode, and follow the test output as it happens.</p>
+      </div>
+      <div id="status" class="status">Idle</div>
+    </header>
+
+    <section class="panel controls" aria-label="Test controls">
+      <label for="test">Test scenario<select id="test"></select></label>
+      <div><button id="run">Run test</button><button id="stop" class="stop" hidden>Stop</button></div>
+    </section>
+
+    <section class="panel output-wrap">
+      <div class="output-head"><h2>Runner output</h2><span class="hint">Chrome opens in its own window</span></div>
+      <pre id="output">Ready to run a Playwright test.</pre>
+    </section>
+  </main>
+  <script>
+    const testSelect = document.querySelector('#test');
+    const runButton = document.querySelector('#run');
+    const stopButton = document.querySelector('#stop');
+    const status = document.querySelector('#status');
+    const output = document.querySelector('#output');
+
+    function render(state) {
+      status.textContent = state.status;
+      status.classList.toggle('running', state.status === 'running');
+      output.textContent = state.output || 'Ready to run a Playwright test.';
+      output.scrollTop = output.scrollHeight;
+      const running = state.status === 'running';
+      runButton.disabled = running;
+      stopButton.hidden = !running;
+    }
+
+    runButton.addEventListener('click', () => window.desktopRunner.start(testSelect.value).catch((error) => {
+      render({ status: 'failed', output: error.message });
+    }));
+    stopButton.addEventListener('click', () => window.desktopRunner.stop());
+    window.desktopRunner.onStateChange(render);
+    window.desktopRunner.getState().then(render);
+    window.desktopRunner.listTests().then((tests) => {
+      tests.forEach((test) => testSelect.add(new Option(test.label, test.id)));
+    });
+  </script>
+</body>
+</html>

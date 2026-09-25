@@ -2,7 +2,8 @@ import { test, expect, chromium } from '@playwright/test';
 
 test('open real Chrome in incognito mode', async () => {
   const browser = await chromium.launch({
-    headless: true,
+    channel: 'chrome',
+    headless: false,
     args: ['--incognito'],
   });
 
